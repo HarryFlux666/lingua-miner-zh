@@ -1,59 +1,83 @@
+# LinguaMiner — Chinese Learning Edition
+
+Learn English with local videos, interactive subtitles, and offline English–Chinese lookup.
+
+A community edition of [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner), based on upstream v1.34.0. It retains the original architecture, learning tools, and MIT license.
+
+![Chinese interface and dictionary lookup / 中文界面与英汉查词](docs/screenshots/zh-preview.png)
+
+## Features
+
+- Simplified Chinese interface, with English as the learning language.
+- Automatically extracts embedded English text subtitles from MKV/MP4 files. Original subtitles take priority.
+- Supports external SRT subtitles and offline faster-whisper transcription when English subtitles are unavailable.
+- Hover over words for spelling, dictionary phonetics, and multiple Chinese meanings. Pronunciation, word status, editing, and flashcard tools remain available.
+- Includes setup for the free ECDICT dictionary and an offline English–Chinese sentence translation model.
+- Fixes misleading “task lost” messages after failed large uploads and subtitle clipping after seeking in narrow windows.
+
+## Install and use · Windows
+
+1. Download the source ZIP from [Releases](https://github.com/nsq31415926/lingua-miner-zh/releases/latest) and fully extract it, preferably to a spacious D/E drive folder.
+2. Double-click **install.bat**. The first installation downloads Python, FFmpeg, dependencies, dictionaries, and models.
+3. Double-click **run.bat**, or open **LinguaMiner 中文学习版** from the Start menu.
+4. Import a video. Embedded English text subtitles load automatically; otherwise choose **导入字幕** (Import subtitles) or **识别字幕** (Transcribe, default: small).
+5. Hover over subtitle words for Chinese meanings; click to access the existing learning tools.
+
+Allow at least **10 GB**, plus space for videos, imported copies, and temporary uploads. Data stays in `data`; runtime files and the virtual environment use `.runtime` and `.venv` beside the application. Some Windows/browser caches may still use the system drive.
+
+## Practical notes
+
+- Initial setup requires internet access. Local playback, dictionaries, sentence translation, and transcription with downloaded models then work offline.
+- Image subtitles and burned-in subtitles cannot be extracted as text. Use SRT or transcription instead; Whisper accuracy varies with audio quality.
+- Keep the server window open during use. Unfinished tasks do not survive a server restart; completed imports remain saved.
+- Anki export requires Anki and AnkiConnect (`2055492159`). They are optional for playback and lookup.
+- Before updating, back up `data`, close the server, replace application files, and rerun **install.bat**, keeping `data`. Existing installations can use `LINGUAMINER_DIR`; do not overwrite this edition with upstream updates.
+- This edition has been tested on Windows. Other platforms have not received full installation testing. Videos, personal records, and downloaded models are not bundled with the source.
+
+## Credits and license
+
+Original project: [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner). Original copyright and [MIT license](LICENSE) are preserved.
+
+[Original README](README.upstream.md) · [Third-party resources](THIRD_PARTY.md) · [Changes and validation](docs/zh-release-notes.md) · [Report an issue](https://github.com/nsq31415926/lingua-miner-zh/issues)
+
+---
+
 # LinguaMiner 中文学习版
 
-为中文使用者适配的 LinguaMiner：看本地英语视频，悬停查英汉词典，用原有学习功能积累词汇。
+用本地英语视频学习英语：互动字幕、悬停查词、离线中文释义。
 
-这是 [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner) 的社区修改版，基于 v1.34.0，保留原项目架构与 MIT 许可，与原作者的官方发行版有区别。
+本版基于 [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner) v1.34.0，属于社区修改版，保留原项目架构、学习功能及 MIT 许可。
 
-![中文界面与英汉查词](docs/screenshots/zh-preview.png)
+## 主要功能
 
-## 主要调整
+- 简体中文界面，默认学习英语。
+- 自动提取 MKV/MP4 内置英文文本字幕，优先使用原字幕。
+- 无英文字幕时，可导入外挂 SRT，或使用 faster-whisper 离线识别。
+- 悬停显示英文单词、词典音标和中文多义释义，保留发音、单词状态、编辑及制卡功能。
+- 配置免费 ECDICT 英汉词典和离线英汉句子翻译模型。
+- 修复大视频上传失败误报“任务丢失”，以及窄窗口拖动进度后字幕被遮挡的问题。
 
-- 默认简体中文界面、学习英语、翻译为中文。
-- MKV/MP4 有内置英文文本字幕时，自动提取并加载原字幕。
-- 没有英文字幕时，可以导入外挂 SRT，或使用原有 faster-whisper 离线识别。
-- 单词浮窗显示英语单词、词典音标和中文多义释义，保留发音、单词状态、编辑与制卡操作。
-- 配置免费的 ECDICT 英汉词典和原翻译引擎兼容的英汉句子模型。
-- 修正大视频上传失败后误报“任务丢失”，并让临时上传文件跟随数据目录。
-- 修正窄窗口打开字幕列表、拖动进度后字幕被播放器边界遮挡的问题。
+## 安装与使用 · Windows
 
-## Windows 安装
-
-1. 下载本仓库 ZIP 并完整解压到空间充足的目录，例如 `E:\LinguaMiner-zh`；不要直接在压缩包里运行。
-2. 双击 **install.bat**，等待首次下载和安装完成；首次需要能访问 GitHub、PyPI 和模型资源站点的网络。
+1. 从[发布页](https://github.com/nsq31415926/lingua-miner-zh/releases/latest)下载源码 ZIP，完整解压到空间充足的目录，建议放在 D/E 盘。
+2. 双击 **install.bat**，等待首次下载 Python、FFmpeg、依赖、词典和模型。
 3. 双击 **run.bat**，或在开始菜单打开 **LinguaMiner 中文学习版**。
+4. 导入视频：内置英文文本字幕会自动加载；否则选择 **导入字幕** 或 **识别字幕**，识别默认使用 small 模型。
+5. 鼠标停在字幕单词上查看中文释义，点击可使用原有学习功能。
 
-无需提前安装 Python 或 FFmpeg；安装程序负责准备，下载失败会显示错误而不会假报成功。
-建议预留至少 10 GB，再加电影和导入副本所需空间；大视频上传过程中还会暂存一份。
-默认数据保存在程序目录的 `data`，安装工具缓存和 Python 保存在 `.runtime`，虚拟环境在 `.venv`；选择 E/D 盘安装可避免主要数据挤占 C 盘。
-浏览器、Windows 与已安装工具可能仍使用系统目录。
-关闭运行窗口会停止服务；不要在后台任务进行中关闭它。
+建议预留至少 **10 GB**，另加视频、导入副本和上传临时文件所需空间。数据保存在程序旁的 `data`，运行环境放在 `.runtime` 和 `.venv`；部分 Windows、浏览器缓存仍可能使用系统盘。
 
-本版优先验证 Windows；原项目的其他平台脚本保留，尚未按中文版完整验证。
+## 使用须知
 
-## 日常使用
-
-1. 打开软件，选择本地视频并等待导入完成。
-2. 有英文文本字幕轨会自动加载；否则使用“导入字幕”选择 SRT，或点击“识别字幕”，默认使用 small 模型。
-3. 鼠标放在英语字幕单词上查看中文释义，点击后可使用发音和原有学习操作。
-4. 拖动进度条定位对白；没有字幕的时间段正常留空。
-
-图片字幕（PGS/VobSub）和压在画面上的字幕不能直接提取；可用音频识别或外挂文本字幕。
-Whisper 识别会受口音、背景音乐及电脑性能影响；它不会自动覆盖已经提取的原字幕。
-首次安装完成后，本地播放、词典、句子翻译和已下载模型的字幕识别可离线运行；在线视频、更新和首次下载仍需联网。
-Anki 制卡需要另行安装 Anki 和 AnkiConnect（插件编号 `2055492159`），不影响看视频和查词。
-
-## 数据与更新
-
-电影、词典数据库、模型、学习记录不包含在源码包中，也不应提交到 GitHub。
-更新前备份 `data`，关闭运行窗口，替换程序文件并重新运行 install.bat；保留 `data` 目录。
-已有安装可通过 `LINGUAMINER_DIR` 指定原数据目录，安装程序不会重置已有设置。
-不要用原版仓库更新覆盖本版；ZIP 安装不会执行 Git 自动更新。
+- 首次安装需要联网；完成后，本地播放、词典、句子翻译及已下载模型的字幕识别可离线运行。
+- 图片字幕和画面烧录字幕无法直接提取为文本，可用外挂 SRT 或语音识别；Whisper 准确度受音频质量影响。
+- 使用时保持服务窗口开启；未完成任务无法跨重启恢复，已完成导入会保留。
+- 导出 Anki 卡片需安装 Anki 和 AnkiConnect（`2055492159`），看视频和查词不需要它们。
+- 更新前备份 `data` 并关闭服务，替换程序文件后重新运行 **install.bat**，保留 `data`；已有安装可用 `LINGUAMINER_DIR` 指定数据目录，请勿用上游更新覆盖本版。
+- 本版已在 Windows 上验证，其他平台尚未完整测试；源码包不包含电影、私人记录或下载模型。
 
 ## 来源与许可
 
-- 原项目：[LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner)，原作者版权声明完整保留于 [LICENSE](LICENSE)。
-- 原版完整介绍：[README.upstream.md](README.upstream.md)。
-- 资源与许可说明：[THIRD_PARTY.md](THIRD_PARTY.md)。
-- 修改和验证记录：[docs/zh-release-notes.md](docs/zh-release-notes.md)。
+原项目：[LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner)，完整保留原作者版权声明及 [MIT 许可](LICENSE)。
 
-反馈问题时请提供操作步骤和错误信息；请勿上传电影、私人学习记录或密钥。
+[原版介绍](README.upstream.md) · [第三方资源](THIRD_PARTY.md) · [修改与验证记录](docs/zh-release-notes.md) · [反馈问题](https://github.com/nsq31415926/lingua-miner-zh/issues)
