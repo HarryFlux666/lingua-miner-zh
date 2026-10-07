@@ -17,7 +17,7 @@ A community edition of [LinguaMiner](https://github.com/thecopybookhare-cmd/ling
 
 ## Install and use · Windows
 
-1. Download the source ZIP from [Releases](https://github.com/nsq31415926/lingua-miner-zh/releases/latest) and fully extract it, preferably to a spacious D/E drive folder.
+1. Download the source ZIP from [Releases](https://github.com/HarryFlux666/lingua-miner-zh/releases/latest) and fully extract it, preferably to a spacious D/E drive folder.
 2. Double-click **install.bat**. The first installation downloads Python, FFmpeg, dependencies, dictionaries, and models.
 3. Double-click **run.bat**, or open **LinguaMiner 中文学习版** from the Start menu.
 4. Import a video. Embedded English text subtitles load automatically; otherwise choose **导入字幕** (Import subtitles) or **识别字幕** (Transcribe, default: small).
@@ -38,7 +38,7 @@ Allow at least **10 GB**, plus space for videos, imported copies, and temporary 
 
 Original project: [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner). Original copyright and [MIT license](LICENSE) are preserved.
 
-[Original README](README.upstream.md) · [Third-party resources](THIRD_PARTY.md) · [Changes and validation](docs/zh-release-notes.md) · [Report an issue](https://github.com/nsq31415926/lingua-miner-zh/issues)
+[Original README](README.upstream.md) · [Third-party resources](THIRD_PARTY.md) · [Changes and validation](docs/zh-release-notes.md) · [Report an issue](https://github.com/HarryFlux666/lingua-miner-zh/issues)
 
 ---
 
@@ -59,7 +59,7 @@ Original project: [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-mi
 
 ## 安装与使用 · Windows
 
-1. 从[发布页](https://github.com/nsq31415926/lingua-miner-zh/releases/latest)下载源码 ZIP，完整解压到空间充足的目录，建议放在 D/E 盘。
+1. 从[发布页](https://github.com/HarryFlux666/lingua-miner-zh/releases/latest)下载源码 ZIP，完整解压到空间充足的目录，建议放在 D/E 盘。
 2. 双击 **install.bat**，等待首次下载 Python、FFmpeg、依赖、词典和模型。
 3. 双击 **run.bat**，或在开始菜单打开 **LinguaMiner 中文学习版**。
 4. 导入视频：内置英文文本字幕会自动加载；否则选择 **导入字幕** 或 **识别字幕**，识别默认使用 small 模型。
@@ -80,4 +80,4 @@ Original project: [LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-mi
 
 原项目：[LinguaMiner](https://github.com/thecopybookhare-cmd/lingua-miner)，完整保留原作者版权声明及 [MIT 许可](LICENSE)。
 
-[原版介绍](README.upstream.md) · [第三方资源](THIRD_PARTY.md) · [修改与验证记录](docs/zh-release-notes.md) · [反馈问题](https://github.com/nsq31415926/lingua-miner-zh/issues)
+[原版介绍](README.upstream.md) · [第三方资源](THIRD_PARTY.md) · [修改与验证记录](docs/zh-release-notes.md) · [反馈问题](https://github.com/HarryFlux666/lingua-miner-zh/issues)

@@ -15,7 +15,7 @@ from pathlib import Path
 
 from . import config
 
-REPO = "https://github.com/nsq31415926/lingua-miner-zh"
+REPO = "https://github.com/HarryFlux666/lingua-miner-zh"
 
 # lo que de verdad ayuda a diagnosticar; el resto es ruido
 _PKGS = ("pywebview", "fastapi", "uvicorn", "faster-whisper", "ctranslate2",

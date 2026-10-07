@@ -51,7 +51,7 @@
 
 ## 发布内容
 
-中文版仓库地址：https://github.com/nsq31415926/lingua-miner-zh 。
+中文版仓库地址：https://github.com/HarryFlux666/lingua-miner-zh 。
 发布时保留原作者的 LICENSE、上游来源和 THIRD_PARTY.md，不提交 data、.runtime、.venv 或私人视频。
 完整补丁针对上面的基线；此前的 seek-subtitle-fix.patch 只有布局修复，不是完整中文版。
 原版参考文档明确保留在 README.upstream.md，日常安装请按根目录中文 README 使用 install.bat。
