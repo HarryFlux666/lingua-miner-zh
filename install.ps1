@@ -1,86 +1,54 @@
-# LinguaMiner — instalación en Windows (PowerShell).
-# No requiere instalar Python ni ffmpeg a mano: uv aporta Python y
-# static-ffmpeg descarga ffmpeg solo. Ejecuta con:
-#   powershell -ExecutionPolicy Bypass -File install.ps1
+﻿# LinguaMiner 中文学习版：在所选安装目录准备 Python、依赖和离线资源。
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
-Write-Host "== LinguaMiner install (Windows) =="
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+$env:PYTHONIOENCODING = "utf-8"
+if (-not $env:LINGUAMINER_DIR) { $env:LINGUAMINER_DIR = Join-Path $PSScriptRoot "data" }
+$Runtime = Join-Path $PSScriptRoot ".runtime"
+$env:UV_CACHE_DIR = Join-Path $Runtime "uv-cache"
+$env:UV_PYTHON_INSTALL_DIR = Join-Path $Runtime "python"
+$env:UV_INSTALL_DIR = Join-Path $Runtime "bin"
+$env:UV_NO_MODIFY_PATH = "1"
+$env:TEMP = Join-Path $env:LINGUAMINER_DIR "tmp"
+$env:TMP = $env:TEMP
+New-Item -ItemType Directory -Force -Path $Runtime,$env:TEMP | Out-Null
+$env:PATH = "$env:UV_INSTALL_DIR;$env:PATH"
 
-# $ErrorActionPreference NO aborta cuando falla un programa externo: solo
-# afecta a los cmdlets. Sin mirar $LASTEXITCODE, un `uv pip install` que
-# fallara pasaba desapercibido y la instalación terminaba diciendo "¡Listo!"
-# con la app rota.
 function Assert-Ok([string]$What) {
-  if ($LASTEXITCODE -ne 0) {
-    Write-Host ""
-    Write-Host "ERROR: $What falló (código $LASTEXITCODE)." -ForegroundColor Red
-    Write-Host "La instalación se detiene aquí. Copia las líneas de arriba en"
-    Write-Host "https://github.com/thecopybookhare-cmd/lingua-miner/issues"
-    exit 1
-  }
+    if ($LASTEXITCODE -ne 0) {
+        throw "$What 失败（退出代码 $LASTEXITCODE）；请保留错误信息，在本仓库 issues 页面反馈。"
+    }
 }
 
-# 1) uv (gestor de Python; se instala solo si falta)
+Write-Host "== LinguaMiner 中文学习版安装 =="
+Write-Host "数据目录：$env:LINGUAMINER_DIR"
+Write-Host "首次安装需要联网下载资源；完成后本地视频、词典和字幕识别可离线使用。"
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-  Write-Host "-- Instalando uv --"
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  $env:Path = "$env:USERPROFILE\.local\bin;$env:Path"
-  if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-    Write-Host ""
-    Write-Host "ERROR: uv se instaló pero no aparece en el PATH." -ForegroundColor Red
-    Write-Host "Cierra esta ventana, abre otra de PowerShell y vuelve a ejecutar."
-    exit 1
-  }
+    Write-Host "正在准备 Python 安装工具……"
+    Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { throw "uv 安装未完成，请检查网络后重试。" }
 }
-
-# 2) entorno + dependencias (uv instala Python 3.12 si hace falta)
-if (-not (Test-Path .venv)) {
-  uv venv --python 3.12 .venv
-  Assert-Ok "crear el entorno virtual"
+if (-not (Test-Path .venv\Scripts\python.exe)) {
+    uv venv --python 3.12 .venv
+    Assert-Ok "创建 Python 环境"
 }
-uv pip install -p .venv\Scripts\python.exe -e .
-Assert-Ok "instalar las dependencias"
-
-# 3) modelos ligeros de primer uso
-Write-Host "-- Modelo spaCy (catalan) --"
-.\.venv\Scripts\python.exe -m spacy download ca_core_news_sm
-if ($LASTEXITCODE -ne 0) {
-  # opcional: sin el modelo se cae al tokenizador regex, la app funciona
-  Write-Host "AVISO: spaCy ca no instalado (se usara el tokenizador regex)."
-}
-Write-Host "-- Traductor + diccionarios (descarga unica) --"
-.\.venv\Scripts\python.exe -c "from app import translate, dictionary, forms; translate.is_downloaded() or translate.download(); print('traductor:', 'ok' if translate.is_downloaded() else 'ERROR'); print('diccionario:', 'ok' if dictionary.load().lookup('gos') else 'ERROR')"
-Assert-Ok "descargar el traductor y los diccionarios"
-
-# 4) comprobacion de arranque
-# Si la app no puede ni importarse, la ventana salia en blanco y el usuario no
-# tenia forma de saber por que. Mejor fallar aqui, con el error delante.
-Write-Host "-- Comprobando que la app arranca --"
+uv sync --frozen --no-dev
+Assert-Ok "安装项目依赖"
+Write-Host "正在安装英语语言模型……"
+uv pip install -p .venv\Scripts\python.exe https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+Assert-Ok "安装英语语言模型"
+.\.venv\Scripts\python.exe -m app.setup_zh
+Assert-Ok "准备离线资源"
 .\.venv\Scripts\python.exe -c "from app.main import app"
-if ($LASTEXITCODE -ne 0) {
-  Write-Host ""
-  Write-Host "ERROR: la instalacion termino pero la app no arranca." -ForegroundColor Red
-  Write-Host "El error esta justo arriba. Copialo en"
-  Write-Host "https://github.com/thecopybookhare-cmd/lingua-miner/issues"
-  exit 1
-}
-Write-Host "   ok"
-
-# 5) acceso directo en el menú Inicio (con icono propio)
+Assert-Ok "检查应用启动"
 try {
-  $StartDir = [Environment]::GetFolderPath('StartMenu')
-  $Lnk = Join-Path $StartDir "Programs\LinguaMiner.lnk"
-  $Shell = New-Object -ComObject WScript.Shell
-  $Sc = $Shell.CreateShortcut($Lnk)
-  $Sc.TargetPath = (Join-Path (Get-Location) "run.bat")
-  $Sc.WorkingDirectory = (Get-Location).Path
-  $Sc.IconLocation = (Join-Path (Get-Location) "assets\AppIcon.ico")
-  $Sc.Description = "LinguaMiner - mine languages from video"
-  $Sc.Save()
-  Write-Host "Acceso directo creado: menú Inicio > LinguaMiner"
-} catch { Write-Host "AVISO: no se pudo crear el acceso directo ($_)" }
-
-Write-Host ""
-Write-Host "¡Listo! Arranca con:  .\run.bat   (o desde el menú Inicio > LinguaMiner)"
-Write-Host "Opcional: instala Anki (https://apps.ankiweb.net) + add-on AnkiConnect (2055492159)."
-Write-Host "El modelo Whisper catalán (~3 GB) se descarga solo al transcribir por primera vez."
+    $StartDir = [Environment]::GetFolderPath('StartMenu')
+    $Shell = New-Object -ComObject WScript.Shell
+    $Sc = $Shell.CreateShortcut((Join-Path $StartDir "Programs\LinguaMiner 中文学习版.lnk"))
+    $Sc.TargetPath = Join-Path $PSScriptRoot "run.bat"
+    $Sc.WorkingDirectory = $PSScriptRoot
+    $Sc.IconLocation = Join-Path $PSScriptRoot "assets\AppIcon.ico"
+    $Sc.Description = "看英语视频、查中文释义"
+    $Sc.Save()
+} catch { Write-Warning "快捷方式创建失败，仍可双击 run.bat 启动。" }
+Write-Host "安装完成！双击 run.bat，或从开始菜单打开 LinguaMiner 中文学习版。"

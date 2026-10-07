@@ -103,7 +103,9 @@ def test_base_language_selectable_and_gated(tmp_path):
     # catalán ofrece base español + inglés
     s = c.get("/api/settings").json()
     assert {b["code"] for b in s["bases"]} == {"es", "en"}
-    # sin nada guardado, "auto" resuelve a inglés: el español dejó de ser el
+    c.post("/api/settings", json={"base_language": "auto", "ui_lang": "en"})
+    s = c.get("/api/settings").json()
+    # With explicit English UI, auto follows that language: el español dejó de ser el
     # valor por defecto para todo el mundo (v1.12)
     assert s["base_language_effective"] == "en"
     c.post("/api/settings", json={"base_language": "es"})

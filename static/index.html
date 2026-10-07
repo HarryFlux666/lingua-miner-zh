@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="es">
+<html lang="zh">
 <head>
 <meta charset="utf-8">
-<title>LinguaMiner</title>
+<title>LinguaMiner 中文学习版</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="icon" href="/favicon.png?v=1.34.0">
+<link rel="icon" href="/favicon.png?v=1.34.1">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0c0d13">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LinguaMiner">
-<link rel="stylesheet" href="/style.css?v=1.34.0">
+<meta name="apple-mobile-web-app-title" content="LinguaMiner 中文学习版">
+<link rel="stylesheet" href="/style.css?v=1.34.1">
 </head>
 <body>
 <!-- sprite de iconos (estilo Lucide: 24×24, trazo 2, sin relleno) -->
@@ -44,7 +44,7 @@
   <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h2l2-7 3 14 3-10 2 6 2-3h6"/></symbol>
 </svg>
 <header>
-  <h1 id="brand"><span class="brand-dot"></span>LinguaMiner</h1>
+  <h1 id="brand"><span class="brand-dot"></span>LinguaMiner 中文学习版</h1>
   <div class="header-right">
     <div id="rec-chip" class="badge" hidden title="Frases i+1: la única palabra nueva se resalta en verde — las óptimas para hacer flashcard. Clic o tecla R para saltar entre ellas." data-i18n-title="tip.rec_chip"></div>
     <div id="comp-chip" class="badge" hidden title="Porcentaje de palabras de este contenido que ya conoces" data-i18n-title="tip.comp_chip"></div>
@@ -64,7 +64,7 @@
 <main id="home">
   <section class="hero">
     <h2 data-i18n="hero.title">Tu biblioteca</h2>
-    <p class="hero-sub" id="hero-sub">Mina idiomas desde tus videos — tarjetas con audio, imagen y traducción directas a Anki.</p>
+    <p class="hero-sub" id="hero-sub">用本地英语视频学习，查中文释义，也可制作学习卡片。</p>
     <div class="new-session">
       <label class="filebtn primary"><svg class="ic"><use href="#i-folder"/></svg><span data-i18n="hero.open">Abrir archivo</span>
         <input type="file" id="file-input" accept="video/*,audio/*,.mkv,.srt,.vtt">
@@ -249,7 +249,7 @@
         <span id="wp-arrow"></span>
         <div class="wp-head">
           <span id="wp-word"></span><span id="wp-ipa"></span>
-          <button id="wp-close" class="close-btn" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button>
+          <button id="wp-close" class="close-btn" aria-label="关闭" data-i18n-title="tip.close"><svg class="ic"><use href="#i-x"/></svg></button>
         </div>
         <div class="wp-chips">
           <span id="wp-level" class="wp-chip"></span>
@@ -306,15 +306,16 @@
 
 <div id="settings-view" class="modal-view" hidden>
   <div id="settings-box" class="modal-box">
-    <div class="stats-head"><h2 data-i18n="set.title">Configuración</h2><button id="settings-close" class="close-btn" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="stats-head"><h2 data-i18n="set.title">Configuración</h2><button id="settings-close" class="close-btn" aria-label="关闭" data-i18n-title="tip.close"><svg class="ic"><use href="#i-x"/></svg></button></div>
     <section>
       <h3 data-i18n="set.sec_lang">Idioma</h3>
       <div class="set-row"><label data-i18n="set.ui_lang">Idioma de la interfaz</label>
         <select id="set-ui-lang">
           <option value="auto" data-i18n="set.ui_auto">Automático (idioma del sistema)</option>
-          <option value="es">Español</option>
-          <option value="ca">Català</option>
-          <option value="en">English</option>
+          <option value="es">西班牙语</option>
+          <option value="ca">加泰罗尼亚语</option>
+          <option value="en">英语</option>
+          <option value="zh">简体中文</option>
         </select></div>
     </section>
     <section id="set-lang-section" hidden>
@@ -457,21 +458,21 @@
 
 <div id="stats-view" hidden>
   <div id="stats-box">
-    <div class="stats-head"><h2 data-i18n="stats.title">Estadísticas</h2><button id="stats-close" class="close-btn" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="stats-head"><h2 data-i18n="stats.title">Estadísticas</h2><button id="stats-close" class="close-btn" aria-label="关闭" data-i18n-title="tip.close"><svg class="ic"><use href="#i-x"/></svg></button></div>
     <div id="stats-body"></div>
   </div>
 </div>
 
 <div id="help-view" class="modal-view" hidden>
   <div class="modal-box">
-    <div class="stats-head"><h2 data-i18n="help.title">Atajos de teclado</h2><button id="help-close" class="close-btn" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="stats-head"><h2 data-i18n="help.title">Atajos de teclado</h2><button id="help-close" class="close-btn" aria-label="关闭" data-i18n-title="tip.close"><svg class="ic"><use href="#i-x"/></svg></button></div>
     <div id="help-body"></div>
   </div>
 </div>
 
 <div id="conj-view" class="modal-view" hidden>
   <div class="modal-box">
-    <div class="stats-head"><h2 id="conj-title">Conjugació</h2><button id="conj-close" class="close-btn" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="stats-head"><h2 id="conj-title">Conjugació</h2><button id="conj-close" class="close-btn" aria-label="关闭" data-i18n-title="tip.close"><svg class="ic"><use href="#i-x"/></svg></button></div>
     <div id="conj-body"></div>
   </div>
 </div>
@@ -479,7 +480,7 @@
 <div id="progress-pill" hidden>
   <progress id="gp-bar" max="1" value="0"></progress>
   <span id="gp-msg"></span>
-  <button id="gp-close" class="close-btn" hidden title="Cerrar" data-i18n-title="tip.close" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button>
+  <button id="gp-close" class="close-btn" hidden title="Cerrar" data-i18n-title="tip.close" aria-label="关闭"><svg class="ic"><use href="#i-x"/></svg></button>
 </div>
 
 <dialog id="level-dlg">
@@ -517,7 +518,7 @@
     });
   }
 </script>
-<script src="/i18n.js?v=1.34.0"></script>
-<script src="/app.js?v=1.34.0"></script>
+<script src="/i18n.js?v=1.34.1"></script>
+<script src="/app.js?v=1.34.1"></script>
 </body>
 </html>

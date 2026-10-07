@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 PORT = 8977
@@ -48,9 +49,15 @@ SETTINGS_PATH = APP_DIR / "settings.json"    # única fuente: main y languages l
 DL_DIR = APP_DIR / "downloads"
 MODELS_DIR = APP_DIR / "models"
 DB_PATH = APP_DIR / "app.db"
+TEMP_DIR = APP_DIR / "tmp"
 
-for d in (APP_DIR, MEDIA_DIR, DL_DIR, MODELS_DIR):
+for d in (APP_DIR, MEDIA_DIR, DL_DIR, MODELS_DIR, TEMP_DIR):
     d.mkdir(parents=True, exist_ok=True)
+
+# Large multipart uploads spill to disk before the import job is created.
+# Keep that temporary copy beside app data, not on the system drive.
+tempfile.tempdir = str(TEMP_DIR)
+os.environ["TMP"] = os.environ["TEMP"] = str(TEMP_DIR)
 
 # HF models cached inside our app dir, not ~/.cache
 os.environ.setdefault("HF_HOME", str(MODELS_DIR / "hf"))

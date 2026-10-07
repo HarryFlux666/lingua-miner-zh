@@ -18,6 +18,8 @@ def isolated_settings(monkeypatch, tmp_path):
     Se parchea en config: main Y languages.active_code() la comparten."""
     from app import config
     monkeypatch.setattr(config, "SETTINGS_PATH", tmp_path / "settings.json")
+    config.SETTINGS_PATH.write_text(
+        '{"language":"ca","base_language":"es","ui_lang":"es"}', encoding="utf-8")
 
 
 @pytest.fixture(autouse=True)

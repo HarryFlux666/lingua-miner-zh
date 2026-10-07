@@ -1,9 +1,11 @@
 """ffmpeg helpers: card audio cut, video frame, browser-safe remux."""
+import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
 
-from . import jobs
+from . import jobs, subs
 
 FFMPEG = "ffmpeg"
 BROWSER_OK = {".mp4", ".m4v", ".mov", ".webm", ".mp3", ".m4a", ".wav", ".aac", ".ogg"}
@@ -158,6 +160,48 @@ def duration(src: str) -> float:
         return 0.0
 
 
+def extract_english_subtitles(src: Path) -> str:
+    """Read an English text subtitle track from the original MKV/MP4.
+
+    Prefer a full track over forced-only captions, then the default track.
+    Bitmap subtitles and tracks without English metadata are not guessed.
+    """
+    if src.suffix.lower() not in {".mkv", ".mp4"}:
+        return ""
+    result = subprocess.run(
+        [_exe("ffprobe"), "-v", "error", "-select_streams", "s",
+         "-show_streams", "-of", "json", str(src)],
+        check=True, capture_output=True, text=True, encoding="utf-8", timeout=30)
+    text_codecs = {"subrip", "srt", "ass", "ssa", "mov_text", "webvtt", "text"}
+    candidates = []
+    for stream in json.loads(result.stdout).get("streams", []):
+        tags = {k.lower(): str(v).lower() for k, v in stream.get("tags", {}).items()}
+        language = tags.get("language", "").replace("_", "-").split("-")[0]
+        title = tags.get("title", "")
+        english = language in {"en", "eng", "english"}
+        if language in {"", "und"}:
+            english = bool(re.search(r"\benglish\b|英文|英语|英語", title))
+        if english and stream.get("codec_name") in text_codecs:
+            candidates.append(stream)
+    candidates.sort(key=lambda s: (
+        s.get("disposition", {}).get("forced", 0),
+        -s.get("disposition", {}).get("default", 0), s["index"]))
+    failure = None
+    for stream in candidates:
+        try:
+            result = subprocess.run(
+                [_exe("ffmpeg"), "-v", "error", "-i", str(src),
+                 "-map", f"0:{stream['index']}", "-c:s", "srt", "-f", "srt", "pipe:1"],
+                check=True, capture_output=True, text=True, encoding="utf-8", timeout=300)
+            if subs.parse_subtitles(result.stdout):
+                return result.stdout
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            failure = exc
+    if failure:
+        raise jobs.JobError("err.embedded_subs", "Could not extract the English subtitle track") from failure
+    return ""
+
+
 def ensure_browser_playable(src: Path, out_dir: Path) -> Path:
     """Remux (or transcode) into mp4 if the browser can't play `src`."""
     if src.suffix.lower() in BROWSER_OK:
@@ -167,10 +211,10 @@ def ensure_browser_playable(src: Path, out_dir: Path) -> Path:
         return out
     # remux/transcode de archivos locales grandes: legítimamente lento
     try:
-        _run([_exe("ffmpeg"), "-y", "-i", str(src), "-c", "copy",
+        _run([_exe("ffmpeg"), "-y", "-i", str(src), "-sn", "-c", "copy",
               "-movflags", "+faststart", str(out)], timeout=1800)
     except subprocess.CalledProcessError:
-        _run([_exe("ffmpeg"), "-y", "-i", str(src), "-c:v", "libx264", "-preset",
+        _run([_exe("ffmpeg"), "-y", "-i", str(src), "-sn", "-c:v", "libx264", "-preset",
               "veryfast", "-crf", "23", "-c:a", "aac",
               "-movflags", "+faststart", str(out)], timeout=3600)
     return out

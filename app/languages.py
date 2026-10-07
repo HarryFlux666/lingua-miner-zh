@@ -74,11 +74,13 @@ PROFILES = {
     },
     "en": {
         "name": "English",
+        "translate_bases": {"zh": {"zip": "https://object.pouta.csc.fi/Tatoeba-MT-models/eng-zho/opus-2020-07-17.zip",
+                                     "dir": "translate-eng-zho", "eos": True, "token": ">>cmn_Hans<<"}},
         "wordfreq": "en",
         "espeak": "en",
         "spacy": "en_core_web_sm",
         "whisper_models": {"large-v3": "large-v3", "small": "small"},
-        "default_whisper": "large-v3",
+        "default_whisper": "small",
         "translate_repo": "michaelfeil/ct2fast-opus-mt-en-es",   # OPUS-MT en→es CT2
         "translate_eos": True,
         "translate_dir": "translate-eng-spa",
@@ -90,10 +92,10 @@ PROFILES = {
         "piper_voice": "en/en_US/amy/low/en_US-amy-low.onnx",
         "sources": [
             {"name": "TED Talks", "kind": "tv", "url": "https://www.ted.com/talks",
-             "note": "Charlas con subtítulos y transcripción", "note_en": "Talks with subtitles and transcripts"},
+             "note": "Charlas con subtítulos y transcripción", "note_en": "Talks with subtitles and transcripts", "note_zh": "附有字幕和讲稿的演讲"},
             {"name": "Archive.org", "kind": "archive",
              "url": "https://archive.org/details/feature_films",
-             "note": "Películas de dominio público", "note_en": "Public-domain films"},
+             "note": "Películas de dominio público", "note_en": "Public-domain films", "note_zh": "公有领域电影"},
         ],
     },
     "de": {
@@ -425,7 +427,7 @@ PROFILES = {
 }
 
 # nombres de los idiomas base para la UI
-BASE_NAMES = {"es": "Español", "en": "English"}
+BASE_NAMES = {"es": "Español", "en": "English", "zh": "简体中文"}
 
 
 def has_spanish_base(code: str) -> bool:
@@ -448,10 +450,10 @@ def activable() -> list[str]:
 def active_code() -> str:
     try:
         s = json.loads(config.SETTINGS_PATH.read_text(encoding="utf-8"))
-        code = s.get("language", "ca")
+        code = s.get("language", "en")
     except Exception:
-        code = "ca"
-    return code if available(code) else "ca"
+        code = "en"
+    return code if available(code) else "en"
 
 
 def profile() -> dict:
@@ -486,9 +488,9 @@ def base_code() -> str:
         s = json.loads(config.SETTINGS_PATH.read_text(encoding="utf-8"))
         b = s.get("base_language", "auto")
         if b == "auto":
-            b = "es" if s.get("ui_lang") == "es" else "en"
+            b = "zh" if s.get("ui_lang", "zh") == "zh" else ("es" if s.get("ui_lang") == "es" else "en")
     except Exception:
-        b = "en"
+        b = "zh"
     avail = bases(active_code())
     return b if b in avail else avail[0]
 

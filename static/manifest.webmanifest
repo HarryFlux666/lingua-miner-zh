@@ -1,8 +1,8 @@
 {
-  "name": "LinguaMiner",
-  "short_name": "LinguaMiner",
-  "description": "Local Migaku-style flashcard miner — learn languages from your videos, cards straight to Anki.",
-  "lang": "es",
+  "name": "LinguaMiner 中文学习版",
+  "short_name": "LinguaMiner 中文版",
+  "description": "看英语视频，查中文释义，使用原有学习功能积累词汇。",
+  "lang": "zh",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,8 +10,21 @@
   "background_color": "#0c0d13",
   "theme_color": "#0c0d13",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

@@ -841,6 +841,16 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* 5 KPIs en una fila equilibrada (y envuelven limpios en pantallas cortas) */
 .kpi-row { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
 
+/* Keep the player wide enough for its controls and clickable subtitles.
+   A fixed 340px transcript sidebar can otherwise leave a tablet-sized window
+   with controls taller than the video, clipping subtitles whenever seeking
+   makes the controls visible. */
+@media (max-width: 900px) {
+  #stage { flex-direction: column; }
+  #video-col { width: 100%; }
+  #side-panel { width: 100%; max-height: 45vh; }
+}
+
 /* ---------- móvil (≤ 480px): sin scroll horizontal jamás ---------- */
 @media (max-width: 480px) {
   /* En una fila, «Abrir archivo» se estiraba a la altura del grupo de URL
@@ -861,8 +871,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   header { padding: 10px 14px; }
   .header-right { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .hero h2 { font-size: 25px; }
-  #stage { flex-direction: column; }
-  #side-panel { width: 100%; max-height: 45vh; }
 }
 @media (max-width: 480px) {
   #transcribe-bar { min-width: 0; width: 100%; }
@@ -979,3 +987,13 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   #reader-page { padding: 20px 18px; font-size: 17.5px; line-height: 1.8; }
   #reader-title { max-width: 34%; }
 }
+
+/* Compact lookup: word, pronunciation, Chinese meanings and learning controls. */
+#word-pop .wp-chips, #wp-ctx, #wp-senses, #wp-gloss,
+#wp-examples, #wp-def, #wp-foot, #wp-dict, #wp-conj-btn { display: none !important; }
+#word-pop { width: min(324px, calc(100vw - 32px)); }
+#wp-userdefs { margin: 12px 0; }
+.wp-meaning { font-size: 14px; line-height: 1.65; color: var(--fg); margin: 6px 0; }
+.wp-meaning.dim { color: var(--dim); }
+
+#word-pop { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }

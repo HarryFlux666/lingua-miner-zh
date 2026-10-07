@@ -27,7 +27,7 @@ def _dicts() -> dict[str, set[str]]:
 
 def test_all_languages_have_the_same_keys():
     d = _dicts()
-    assert set(d) == {"es", "ca", "en"}, f"idiomas inesperados: {sorted(d)}"
+    assert set(d) == {"es", "ca", "en", "zh"}, f"idiomas inesperados: {sorted(d)}"
     for lang, keys in d.items():
         if lang == "es":
             continue
@@ -55,7 +55,7 @@ def test_ui_lang_options_are_accepted_by_the_api():
     block = block[:block.index("</select>")]
     offered = set(re.findall(r'<option value="([^"]+)"', block))
     assert DEFAULT_SETTINGS["ui_lang"] in offered
-    allowed = {"auto", "es", "ca", "en"}
+    allowed = {"auto", "es", "ca", "en", "zh"}
     assert offered <= allowed, f"opciones no soportadas: {sorted(offered - allowed)}"
 
 
@@ -88,7 +88,7 @@ def test_translations_keep_their_placeholders():
 
 def test_i18n_js_is_valid_json_shaped():
     """Sanidad: el bloque debe tener las tres aperturas y cierres emparejados."""
-    assert I18N_JS.count("\n  },") == 3
+    assert I18N_JS.count("\n  },") == 4
     # y las cadenas no deben llevar comillas sin escapar (rompen el parseo)
     for m in re.finditer(r'"([^"]+)":\s*"((?:[^"\\]|\\.)*)"', I18N_JS):
         json.loads(f'"{m.group(2)}"')

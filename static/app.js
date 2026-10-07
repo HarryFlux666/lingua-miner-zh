@@ -146,7 +146,7 @@ setInterval(syncStatuses, 600000);
 window.addEventListener("focus", () => syncStatuses());
 
 // ---------- biblioteca ----------
-const SRC_LABEL = () => ({ whisper: "Whisper", srt: "SRT", youtube_subs: t("src.yt"), youtube_auto: t("src.yt_auto"), none: t("src.none"), "-": "—" });
+const SRC_LABEL = () => ({ whisper: "Whisper", srt: "SRT", embedded: t("src.embedded"), youtube_subs: t("src.yt"), youtube_auto: t("src.yt_auto"), none: t("src.none"), "-": "—" });
 
 // badge de origen (arriba a la izquierda de la miniatura)
 function sourceBadge(s) {
@@ -367,7 +367,7 @@ $("gp-close").onclick = hideProgress;
 function errMsg(r, porDefecto = "") {
   if (!r) return porDefecto;
   if (r.error_key) return t(r.error_key, ...(r.error_args || []));
-  return r.error || porDefecto;
+  return r.error || (typeof r.detail === "string" ? r.detail : "") || porDefecto;
 }
 
 function jobMsg(j, label) {
@@ -376,10 +376,18 @@ function jobMsg(j, label) {
 }
 
 async function pollJob(jid, label) {
+  if (typeof jid !== "string" || !jid.trim()) {
+    showProgress(1, t("job.not_started"), true);
+    return null;
+  }
   showProgress(0, label);
   while (true) {
     const j = await api("/api/jobs/" + jid).catch(() => null);
-    if (!j || j.error) {                 // server reiniciado: el job ya no existe
+    if (!j) {
+      showProgress(1, t("job.connection"), true);
+      return null;
+    }
+    if (j.error) {                       // a real job ID no longer exists
       showProgress(1, t("job.lost"), true);
       return null;
     }
@@ -402,9 +410,18 @@ function uploadWithProgress(url, fd) {
     x.upload.onprogress = (e) => {
       if (e.lengthComputable)
         showProgress(e.loaded / e.total,
-          `Subiendo… ${Math.round((100 * e.loaded) / e.total)}%`);
+          t("job.uploading", Math.round((100 * e.loaded) / e.total)));
     };
-    x.onload = () => { try { resolve(JSON.parse(x.responseText)); } catch (err) { reject(err); } };
+    x.onload = () => {
+      try {
+        const r = JSON.parse(x.responseText);
+        if (x.status < 200 || x.status >= 300) {
+          resolve({ ...r, error: errMsg(r, t("job.upload_err")) });
+        } else {
+          resolve(r);
+        }
+      } catch (err) { reject(err); }
+    };
     x.onerror = () => reject(new Error("fallo de red"));
     x.send(fd);
   });
@@ -415,6 +432,9 @@ let PENDING_SEEK = 0;                    // reanudar / saltar desde búsqueda
 async function openSession(sid, opts = {}) {
   const s = await api("/api/sessions/" + sid);
   SESSION = s; SEGS = s.transcript; STATUS = s.word_statuses || {};
+  const hasOriginalSubs = s.srt_source === "embedded" && SEGS.length > 0;
+  $("transcribe-btn").hidden = hasOriginalSubs;
+  $("model-select").hidden = hasOriginalSubs;
   CUR = -1; POP = null; HOVER = null; PINNED = false; $("word-pop").hidden = true;
   setOffset(0);                         // el desfase es por sesión
   // a dónde saltar al cargar: línea buscada > reanudar donde se dejó > inicio
@@ -652,7 +672,7 @@ function renderSources() {
     <a class="src-card" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
       <svg class="ic"><use href="#${SRC_ICON[s.kind] || "i-globe"}"/></svg>
       <span class="src-name">${esc(s.name)}</span>
-      <span class="src-note dim">${esc((UILANG === "en" && s.note_en) || s.note || "")}</span>
+      <span class="src-note dim">${esc((UILANG === "zh" && (s.note_zh || s.note_en)) || (UILANG === "en" && s.note_en) || s.note || "")}</span>
     </a>`).join("");
 }
 
@@ -733,6 +753,7 @@ $("speed-btn").onclick = () => {
 };
 
 function setDual(v) {
+  if (UILANG === "zh" && SETTINGS?.base_language_effective !== "zh") v = false;
   DUAL = v;
   $("dual-btn").classList.toggle("on", v);
   $("overlay-es").hidden = !v || HIDE_ES;
@@ -931,6 +952,10 @@ function wakeControls() {
 $("video-wrap").addEventListener("mousemove", wakeControls);
 $("video-wrap").addEventListener("touchstart", wakeControls, { passive: true });
 window.addEventListener("resize", syncCtlH);
+// Opening the transcript panel changes player width without a window resize.
+// Keep the subtitle lift in sync when the controls wrap onto another row.
+const controlsResize = new ResizeObserver(syncCtlH);
+controlsResize.observe($("controls"));
 // al abrir el popup se pausa el video → aparecen los controles → el subtítulo
 // sube (lift): re-pegar el popup a la palabra cuando la transición termina
 $("overlay-sub").addEventListener("transitionend", (e) => {
@@ -1074,6 +1099,8 @@ async function openPopup(segIndex, selection, anchorEl, pin) {
           lemma: (anchorEl.dataset?.l || selection).toLowerCase() };
   $("wp-word").textContent = selection;
   $("wp-ipa").textContent = "";
+  $("wp-userdefs").textContent = "…";
+  $("wp-userdefs").hidden = false;
   $("wp-meta").textContent = "…";
   $("wp-level").textContent = "";
   $("wp-senses").innerHTML = "";
@@ -1106,38 +1133,39 @@ async function openPopup(segIndex, selection, anchorEl, pin) {
   if (POP.anchor) positionPopup(POP.anchor);   // recolocar con la altura final
 }
 
-const LEVEL_LABEL = { 5: "muy frecuente", 4: "frecuente", 3: "media", 2: "poco común", 1: "rara" };
 function zipfLevel(z) { return z >= 5.5 ? 5 : z >= 5 ? 4 : z >= 4.3 ? 3 : z >= 3.3 ? 2 : 1; }
+
+function chineseDictionaryEntry(raw) {
+  let text = String(raw || "");
+  const phonetic = text.match(/^\*?\[([^\]]+)\]\s*/);
+  const ipa = phonetic ? "/" + phonetic[1] + "/" : "";
+  if (phonetic) text = text.slice(phonetic[0].length);
+  text = text.replace(/^-K\d+\s*/, "")
+    .replace(/\[(?:时态|原型)\][\s\S]*$/, "")
+    .replace(/\s*\([^()]*\d+\/\d+[^()]*\)\s*$/, "");
+  const parts = { n: "名词", v: "动词", vt: "及物动词", vi: "不及物动词",
+    a: "形容词", adj: "形容词", ad: "副词", adv: "副词", prep: "介词",
+    pron: "代词", conj: "连词", interj: "感叹词", int: "感叹词",
+    num: "数词", art: "冠词", aux: "助动词", abbr: "缩写", pl: "复数" };
+  text = text.replace(/(^|\s)(interj|abbr|prep|pron|conj|adj|adv|aux|art|num|int|vt|vi|ad|pl|n|v|a)\.\s*/g,
+    (_, gap, pos) => "\n" + parts[pos] + "：");
+  const meanings = text.split("\n").map(line => line.trim())
+    .filter(line => /[\u3400-\u9fff]/.test(line));
+  return { ipa, meanings };
+}
 
 function renderPopupLookup(r) {
   $("word-pop").classList.remove("loading");
-  $("wp-ipa").textContent = (SETTINGS?.ipa_enabled ?? true) ? (r.ipa || "") : "";
-  const lvl = zipfLevel(r.zipf);
-  $("wp-level").textContent = `${LEVEL_LABEL[lvl]} ★${lvl}`;
-  $("wp-meta").textContent = `${lemmaLabel(r.lemma)}${r.pos ? " · " + r.pos : ""}`;
-  $("wp-sentence-es").textContent = r.sentence_es || "";
-  // con base ≠ español no hay acepciones (fuentes en español); no es un fallo
-  const noSenseMsg = (SETTINGS?.base_language_effective || "es") === "es"
-    ? `<span class="dim" style="font-size:13px">${esc(t("wp.no_senses"))}</span>` : "";
-  $("wp-senses").innerHTML = (r.senses.length ? r.senses : [])
-    .map((s, i) => `<span class="sense${i === r.active ? " active" : ""}" data-es="${esc(s.es)}">${esc(s.es)} <small>${esc(s.pos)}</small></span>`).join("")
-    || noSenseMsg;
-  for (const sp of $("wp-senses").querySelectorAll(".sense"))
-    sp.onclick = () => { POP.chosen = sp.dataset.es; mineFromPopup(); };
-  if (r.senses.length && r.active >= 0) POP.active_es = r.senses[r.active].es;
-  const gl = (r.glosses || []).slice(0, 3);
-  $("wp-gloss").hidden = !gl.length;
-  $("wp-gloss").innerHTML = gl.map((g) => `<div class="wp-gl"><svg class="ic ic-xs"><use href="#i-book"/></svg>${esc(g.es)}</div>`).join("");
-  const uds = (r.userdefs || []).slice(0, 4);
-  $("wp-userdefs").hidden = !uds.length;
-  $("wp-userdefs").innerHTML = uds.map((u) =>
-    `<div class="wp-gl"><svg class="ic ic-xs"><use href="#i-book"/></svg>${esc(u.text)} <small class="dim">${esc(u.source)}</small></div>`).join("");
-  $("wp-word-es").textContent = r.word_es || "";
-  $("wp-say").hidden = !(r.ipa || r.tts);            // voz Piper o espeak
-  $("wp-dict").hidden = !(SETTINGS?.online_enabled);
-  // conjugación: solo verbos y solo con diccionario de formas (catalán)
-  $("wp-conj-btn").hidden = !(r.pos === "VERB" && (SETTINGS?.language ?? "ca") === "ca");
-  renderExamples(r);
+  const entries = (r.userdefs || []).map(u => chineseDictionaryEntry(u.text));
+  const meanings = [...new Set(entries.flatMap(e => e.meanings))];
+  const dictionaryIpa = entries.find(e => e.ipa)?.ipa || "";
+  $("wp-ipa").textContent = (SETTINGS?.ipa_enabled ?? true) ? (r.ipa || dictionaryIpa) : "";
+  $("wp-userdefs").hidden = false;
+  $("wp-userdefs").innerHTML = meanings.length
+    ? meanings.map(text => `<div class="wp-meaning">${esc(text)}</div>`).join("")
+    : '<div class="wp-meaning dim">暂无中文释义</div>';
+  if (POP && meanings.length) POP.chosen = meanings.join("；");
+  $("wp-say").hidden = !(r.ipa || r.tts);
 }
 
 async function openConj(lemma) {
@@ -1573,7 +1601,7 @@ function applySettings() {
   // En el primer arranque fijamos aquí el valor real: solo quien tenga la
   // interfaz en español traduce a español.
   if (SETTINGS.base_language === "auto") {
-    saveSettings({ base_language: detectUILang() === "es" ? "es" : "en" });
+    saveSettings({ base_language: detectUILang() === "zh" ? "zh" : (detectUILang() === "es" ? "es" : "en") });
   }
   rebuildKeymap();
   renderKeyEditor();
@@ -1591,23 +1619,26 @@ function applySettings() {
   const langs = (SETTINGS.languages || []).filter((l) => l.available);
   $("set-lang-section").hidden = langs.length <= 1;
   $("set-language").innerHTML = langs.map((l) =>
-    `<option value="${l.code}"${l.code === SETTINGS.language ? " selected" : ""}>${l.name}</option>`).join("");
+    `<option value="${l.code}"${l.code === SETTINGS.language ? " selected" : ""}>${esc(languageLabel(l.code, l.name))}</option>`).join("");
   syncOnbLang();
   // idioma base (traducir a): solo si el idioma de estudio ofrece alternativas
   const bases = SETTINGS.bases || [{ code: "es", name: "Español" }];
   const activeBase = SETTINGS.base_language_effective || "es";
   $("set-base-section").hidden = bases.length <= 1;
   $("set-base").innerHTML = bases.map((b) =>
-    `<option value="${esc(b.code)}"${b.code === activeBase ? " selected" : ""}>${esc(b.name)}</option>`).join("");
+    `<option value="${esc(b.code)}"${b.code === activeBase ? " selected" : ""}>${esc(languageLabel(b.code, b.name))}</option>`).join("");
   // nivel de recomendación (zipf mínimo): el valor guardado marca la opción
   const rz = String(SETTINGS.rec_min_zipf ?? 3.5);
   const recSel = $("set-rec-level");
   recSel.value = [...recSel.options].some((o) => o.value === rz) ? rz : "3.5";
   // etiquetas «ES» de la tarjeta y del dual → idioma base activo
-  const baseTag = activeBase.toUpperCase();
+  const baseTag = activeBase === "zh" ? "中文" : activeBase.toUpperCase();
   $("lbl-word-es").textContent = t("card.word") + " " + baseTag;
   $("lbl-sentence-es").textContent = t("card.sentence") + " " + baseTag;
   $("dual-btn").title = t("dual.title", baseTag);
+  const chineseOnly = UILANG === "zh" && activeBase !== "zh";
+  $("dual-btn").hidden = chineseOnly;
+  $("set-dual").closest(".set-row").hidden = chineseOnly;
   // selector de Whisper según el idioma activo (el modelo catalán AINA no
   // debe ofrecerse para transcribir alemán, etc.)
   const wm = SETTINGS.whisper_models || [];
@@ -1618,7 +1649,7 @@ function applySettings() {
       "small": t("wh.small"),
     };
     $("model-select").innerHTML = wm.map((k) =>
-      `<option value="${esc(k)}"${k === SETTINGS.default_whisper ? " selected" : ""}>${esc(WLBL[k] || k)}</option>`).join("");
+      `<option value="${esc(k)}"${k === (UILANG === "zh" ? "small" : SETTINGS.default_whisper) ? " selected" : ""}>${esc(WLBL[k] || k)}</option>`).join("");
   }
   // el hero refleja el idioma de estudio activo («Mina inglés desde tus videos…»)
   const lc = SETTINGS.language || "ca";
@@ -1671,7 +1702,7 @@ function renderKeyEditor() {
   const km = SETTINGS?.keymap || DEFAULT_KEYMAP;
   $("set-keys").innerHTML = ACTIONS.map((a) =>
     `<div class="set-row"><label>${actionLabel(a)}</label>
-     <button class="keybtn" data-act="${a}">${CAPTURING === a ? "pulsa una tecla…" : (km[a] || "?").toUpperCase()}</button></div>`).join("");
+     <button class="keybtn" data-act="${a}">${CAPTURING === a ? t("set.press_key") : (km[a] || "?").toUpperCase()}</button></div>`).join("");
   for (const b of $("set-keys").querySelectorAll(".keybtn"))
     b.onclick = () => { CAPTURING = b.dataset.act; renderKeyEditor(); };
 }
@@ -1727,10 +1758,17 @@ document.addEventListener("keydown", (e) => {
 
 $("set-keys-reset").onclick = () => saveSettings({ keymap: { ...DEFAULT_KEYMAP } });
 
+function languageLabel(code, fallback) {
+  if (UILANG !== "zh") return fallback;
+  return ({ en: "英语", zh: "简体中文", es: "西班牙语", ca: "加泰罗尼亚语",
+    fr: "法语", de: "德语", pt: "葡萄牙语", it: "意大利语", ru: "俄语",
+    nl: "荷兰语", ja: "日语", ko: "韩语", yue: "粤语" })[code] || fallback;
+}
+
 function renderUserdicts(dicts) {
   $("set-userdict-list").innerHTML = dicts.length
-    ? dicts.map((d) => `<div class="set-row"><label>${esc(d.name)} <small class="dim">(${d.entries} entradas)</small></label><button class="small ud-rm" data-slug="${esc(d.slug)}">Quitar</button></div>`).join("")
-    : '<p class="dim" style="font-size:13px">— ninguno importado —</p>';
+    ? dicts.map((d) => `<div class="set-row"><label>${esc(d.name)} <small class="dim">${esc(t("set.dict_entries", d.entries))}</small></label><button class="small ud-rm" data-slug="${esc(d.slug)}">${esc(t("set.dict_remove"))}</button></div>`).join("")
+    : `<p class="dim" style="font-size:13px">${esc(t("set.dict_empty"))}</p>`;
   for (const b of $("set-userdict-list").querySelectorAll(".ud-rm"))
     b.onclick = async () => {
       const r = await api("/api/userdict/remove", { method: "POST", body: JSON.stringify({ slug: b.dataset.slug }) });
@@ -2272,6 +2310,4 @@ function nextRec() {
 $("rec-chip").onclick = () => nextRec();
 
 // ---------- init ----------
-loadSettings();
-loadSessions();
-refreshAnki();
+loadSettings().then(() => { loadSessions(); refreshAnki(); }).catch(() => toast(t("job.connection"), "err"));

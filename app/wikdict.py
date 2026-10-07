@@ -65,6 +65,8 @@ def build(jsonl_text: str, db_path: Path):
 
 def _url_for(code: str, base: str) -> str | None:
     from . import languages
+    if base == "zh":
+        return None  # Chinese meanings come from the installed ECDICT dictionary.
     p = languages.PROFILES.get(code) or {}
     return p.get("wikdict_url_en") if base == "en" else p.get("wikdict_url")
 

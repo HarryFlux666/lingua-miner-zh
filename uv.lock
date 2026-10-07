@@ -471,6 +471,12 @@ wheels = [
 ]
 
 [[package]]
+name = "ipadic"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/4e/c459f94d62a0bef89f866857bc51b9105aff236b83928618315b41a26b7b/ipadic-1.0.0.tar.gz", hash = "sha256:f5923d31eca6131acaaf18ed28d8998665b1347b640d3a6476f64650e9a71c07", size = 13413189, upload-time = "2020-07-20T03:35:40.209Z" }
+
+[[package]]
 name = "jaraco-classes"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -513,6 +519,12 @@ wheels = [
 ]
 
 [[package]]
+name = "jieba"
+version = "0.42.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/cb/18eeb235f833b726522d7ebed54f2278ce28ba9438e3135ab0278d9792a2/jieba-0.42.1.tar.gz", hash = "sha256:055ca12f62674fafed09427f176506079bc135638a14e23e25be909131928db2", size = 19214172, upload-time = "2020-01-20T14:27:23.5Z" }
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -552,7 +564,7 @@ wheels = [
 
 [[package]]
 name = "lingua-miner"
-version = "1.9.1"
+version = "1.34.1"
 source = { editable = "." }
 dependencies = [
     { name = "ctranslate2" },
@@ -570,7 +582,7 @@ dependencies = [
     { name = "spacy" },
     { name = "static-ffmpeg" },
     { name = "uvicorn", extra = ["standard"] },
-    { name = "wordfreq" },
+    { name = "wordfreq", extra = ["cjk"] },
     { name = "yt-dlp" },
 ]
 
@@ -599,7 +611,7 @@ requires-dist = [
     { name = "spacy", specifier = ">=3.7" },
     { name = "static-ffmpeg", specifier = ">=2.5" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
-    { name = "wordfreq", specifier = ">=3.1" },
+    { name = "wordfreq", extras = ["cjk"], specifier = ">=3.1" },
     { name = "yt-dlp", specifier = ">=2025.1.1" },
 ]
 
@@ -658,6 +670,26 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "mecab-ko-dic"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/86/b88d823b0c912bb8e86584d697d51c866df567bd328f9196efab7835b8ab/mecab-ko-dic-1.0.0.tar.gz", hash = "sha256:3ba22858736e02e8a0e92f2a7f099528c733ae47701b29d12c75e982a85d1f11", size = 33150228, upload-time = "2021-02-19T20:41:22.16Z" }
+
+[[package]]
+name = "mecab-python3"
+version = "1.0.12"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/54/d52aebc1a1836778a9a97600304821f3c57d384ef1e5c8787a0c6f2a292d/mecab_python3-1.0.12.tar.gz", hash = "sha256:9aba1e56ef80dd97147dcbf8e3508147af129fb46cec0e432b85f96a9bdaa4b9", size = 78841, upload-time = "2025-11-25T11:21:25.68Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/ca/0f1fff8b2ee98c9a2441da4e52761bb55fdf8cea88e40e72236ce74c5e79/mecab_python3-1.0.12-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:641ad39ecd1cd565019fb5b78e471e7b6baff03958b2c05db5c2f7226cb17750", size = 474643, upload-time = "2025-11-25T11:27:15.931Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/60/e6a717cefe9d8051081b5a4b9bdaac1e0022bd9dabad12bc58d202446f7c/mecab_python3-1.0.12-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:477d22faac294d7d4acc52966221fc63785f050ce1ca94cc74de42c8b1bbde2e", size = 438321, upload-time = "2025-11-25T11:27:16.906Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/22/25aa0467edb84b9285a0620e32407195d56f206610057f93f73dd21be740/mecab_python3-1.0.12-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:3ca8591fbb30253df8f283f3c5b7c9fc593c6e290e985a453e9a7b8345f04d0f", size = 435262, upload-time = "2025-11-25T11:27:18.204Z" },
+    { url = "https://files.pythonhosted.org/packages/55/d4/b2b9faaa87bd219369a5df9296a5711439e6e204428abfbcab69d046905a/mecab_python3-1.0.12-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2429b3977e62b65cd36f098b6814da427c54afe11da97ca39e85dbad2c0f1342", size = 569306, upload-time = "2025-11-25T11:45:54.333Z" },
+    { url = "https://files.pythonhosted.org/packages/22/36/d49e077cf95ade987fa72b9afcc84ec5e907d15f1c6b02ec5ba14c7a9cb3/mecab_python3-1.0.12-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:dae0605065e9eda6f3aa74dd08c781de7371a447aec3fa6d3e31d7340bd6e5f0", size = 591444, upload-time = "2025-11-25T11:23:40.145Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/07/c0699f4952e4423a0d192f1709c731202f36de1c86b637738f0c5b0b48fb/mecab_python3-1.0.12-cp312-cp312-win_amd64.whl", hash = "sha256:ef10b35d580e90a776e2e672fe516f371c48cd0ebeaa4f1e0bcb902e216724ba", size = 502652, upload-time = "2025-11-25T11:22:48.324Z" },
 ]
 
 [[package]]
@@ -1695,6 +1727,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4c/cd/9581ff0ea2c581012d0caae4bba024f3ff6b46e030a55ddec1ce545e2caf/wordfreq-3.1.1.tar.gz", hash = "sha256:7943098975f25c2a70e1151ee5a62083b14a5f86f6cc5703cc9526f716ceb408", size = 56846562, upload-time = "2023-11-21T23:09:12.106Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/61/62835c475d69872d30689f284497853fe33fe1d6dd18f57346d13305861d/wordfreq-3.1.1-py3-none-any.whl", hash = "sha256:4b1c6ecffc6198be3396d5cf871c4423ca71c907c231348d352dd54d62b97473", size = 56834549, upload-time = "2023-11-21T23:09:07.183Z" },
+]
+
+[package.optional-dependencies]
+cjk = [
+    { name = "ipadic" },
+    { name = "jieba" },
+    { name = "mecab-ko-dic" },
+    { name = "mecab-python3" },
 ]
 
 [[package]]

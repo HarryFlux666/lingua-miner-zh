@@ -11,9 +11,11 @@ from urllib.parse import unquote as url_unquote
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException
 
 from . import (
     anki,
@@ -104,6 +106,20 @@ from . import diagnostics  # noqa: E402
 diagnostics.install()          # capturar el log aunque no se arranque por el lanzador
 
 app = FastAPI(title="LinguaMiner", lifespan=lifespan)
+
+
+@app.exception_handler(HTTPException)
+async def upload_body_error(request: Request, exc: HTTPException):
+    # Multipart parsing runs before upload(), so a failed request has no job ID.
+    if request.url.path == "/api/sessions/upload" and exc.status_code == 400:
+        import errno
+        cause = exc.__cause__
+        _log.warning("Media upload rejected before job creation: %s; cause=%r",
+                     exc.detail, cause)
+        if isinstance(cause, OSError) and cause.errno == errno.ENOSPC:
+            return _err("err.upload_space", "Not enough temporary disk space", 507)
+        return _err("err.upload_body", "Could not read the uploaded video", 400)
+    return await http_exception_handler(request, exc)
 
 
 @app.middleware("http")
@@ -288,14 +304,14 @@ def _segment_es(sid: str, idx: int) -> str:
 
 
 DEFAULT_SETTINGS = {
-    "deck": "LinguaMiner::Mining", "anki_port": None, "language": "ca",
+    "deck": "LinguaMiner::Mining", "anki_port": None, "language": "en",
     "sub_scale": 1.0, "dual_default": False, "autopause_default": False,
     "speed_default": 1.0, "ipa_enabled": True, "online_enabled": False,
     # "auto" = el navegador decide (i18n.js); quien ya tenga un idioma guardado
     # lo conserva, esto solo afecta a instalaciones nuevas
     # "auto" = el navegador decide (i18n.js); quien ya tenga un idioma guardado
     # lo conserva, esto solo afecta a instalaciones nuevas
-    "audio_trim": False, "ui_lang": "auto", "base_language": "auto",
+    "audio_trim": False, "ui_lang": "zh", "base_language": "zh",
     # zipf mínimo para recomendar una palabra (0-7). Solo se recomiendan
     # palabras frecuentes y que no sean nombres propios (nivel de vocabulario).
     "rec_min_zipf": 3.5,
@@ -357,9 +373,10 @@ def _setup_checks() -> dict:
         "espeak": bool(shutil.which("espeak-ng") or shutil.which("espeak")),
         "spacy": importlib.util.find_spec(prof["spacy"]) is not None,
         "translator": translate.is_downloaded(),
-        "forms": (dl / "forms.sqlite").exists()
+        "forms": not prof.get("forms_url") or (dl / "forms.sqlite").exists()
                  or (dl / f"forms-{_lang()}.sqlite").exists(),
-        "dictionary": (dl / prof["bidix_file"]).exists(),
+        "dictionary": (bool(userdict.lookup("hello")) if _lang() == "en" and languages.base_code() == "zh"
+                       else (dl / prof["bidix_file"]).exists()),
         "tts": piper_tts.is_downloaded(),
         "anki": anki.is_up(_settings().get("anki_port")),
     }
@@ -412,7 +429,11 @@ def setup_download():
             translate.download()
         jobs.set_progress(jid, 0.6, "Diccionario de acepciones…",
                           key="job.bidix")
-        _dict()
+        if _lang() == "en" and languages.base_code() == "zh":
+            from .setup_zh import ensure_dictionary
+            ensure_dictionary()
+        else:
+            _dict()
         jobs.set_progress(jid, 0.75, "Diccionario de formas (~66 MB)…",
                           key="job.forms")
         forms.lookup("hola")          # dispara descarga+build
@@ -676,15 +697,21 @@ async def upload(file: UploadFile = File(...)):
     fname = safe_name
 
     def work(jid):
+        jobs.set_progress(jid, 0.1, "Checking English subtitles…", key="job.embedded_subs")
+        subtitle_text = media.extract_english_subtitles(dest)
+        segs = []
+        if subtitle_text:
+            from .transcribe import tokens_for_existing
+            segs = tokens_for_existing(subs.parse_subtitles(subtitle_text))
         jobs.set_progress(jid, 0.3, "Convirtiendo el video si hace falta…",
                           key="job.converting")
         playable = media.ensure_browser_playable(dest, config.DL_DIR)
         jobs.set_progress(jid, 0.8, "Analizando el video…", key="job.analysing")
         sid = db.create_session(
             CON, language=languages.active_code(), title=fname, source_type="local",
-            media_path=str(playable), srt_source="none", model_size="-",
+            media_path=str(playable), srt_source="embedded" if segs else "none", model_size="-",
             duration_secs=media.duration(str(playable)),
-            transcript_json="[]")
+            transcript_json=json.dumps(segs))
         sidecar = _find_sidecar_subs(dest)
         return {"session_id": sid, "has_sidecar_subs": bool(sidecar)}
 
@@ -854,7 +881,7 @@ def youtube_import(req: YoutubeReq):
 
 
 class TranscribeReq(BaseModel):
-    model: str = config.DEFAULT_WHISPER
+    model: str = Field(default_factory=lambda: languages.profile()["default_whisper"])
     use_sidecar: bool = False
 
 
@@ -863,6 +890,8 @@ def do_transcribe(sid: str, req: TranscribeReq):
     s = db.get_session(CON, sid)
     if not s:
         return JSONResponse({"error": "not found"}, status_code=404)
+    if s["srt_source"] == "embedded" and json.loads(s["transcript_json"]):
+        return _err("err.original_subs", "English subtitles are already loaded")
     if not req.use_sidecar and req.model not in languages.profile()["whisper_models"]:
         return _err("err.model_lang",
                     f"modelo «{req.model}» no disponible para este idioma",
@@ -1010,6 +1039,13 @@ def lookup(req: LookupReq):
     """Instant word info for the Migaku-style popup (no media generated)."""
     lemma, pos = nlp.analyze_selection(req.selection, req.sentence)
     z = nlp.zipf(req.selection)
+    if _lang() == "en" and languages.base_code() == "zh":
+        definitions = userdict.lookup(req.selection) or userdict.lookup(lemma)
+        return {"selection": req.selection, "lemma": lemma, "pos": pos,
+                "zipf": z, "freq_rank": nlp.freq_badge(z), "senses": [],
+                "glosses": [], "word_es": "", "sentence_es": "",
+                "userdefs": [{"text": d, "source": source} for d, source in definitions[:4]],
+                "ipa": ipa.ipa(req.selection), "tts": piper_tts.available()}
     es_src = languages.spanish_sources_active()   # bidix/glosas son fuentes es
     senses = _senses(req.selection, lemma) if es_src else []
     word_es = _word_es(req.selection, lemma)
@@ -1714,7 +1750,7 @@ def post_settings(body: dict):
         if lo_hi and v is not None and not lo_hi[0] <= v <= lo_hi[1]:
             return JSONResponse({"error": f"{k} fuera de rango {lo_hi}"},
                                 status_code=400)
-    if "ui_lang" in body and body["ui_lang"] not in ("auto", "es", "ca", "en"):
+    if "ui_lang" in body and body["ui_lang"] not in ("auto", "es", "ca", "en", "zh"):
         return JSONResponse({"error": "ui_lang no soportado"}, status_code=400)
     if ("base_language" in body and body["base_language"] != "auto"
             and body["base_language"] not in languages.BASE_NAMES):
